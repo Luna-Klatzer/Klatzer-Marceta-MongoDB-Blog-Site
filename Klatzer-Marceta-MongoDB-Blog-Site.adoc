@@ -1,0 +1,786 @@
+= MongoDB Blog Site
+
+Date: 12.04.2024
+Authors: Luna Klatzer, Mia Marceta
+
+== Database Setup & Sample Data
+
+=== Task 1. ~ Create a new database
+
+Query:
+
+[source]
+----
+use blog
+----
+
+=== Task 2. ~ Create the collections for the required data
+
+We will create a collection for the following data:
+
+- `BlogUsers`
+- `BlogEntries`
+- `BlogCategories`
+- `Comments`
+
+Query:
+
+[source]
+----
+db.createCollection("BlogUsers")
+db.createCollection("BlogEntries")
+db.createCollection("BlogCategories")
+db.createCollection("Comments")
+----
+
+=== 3. Create 5 blog users
+
+We will create 5 blog users with the following fields:
+
+- `username`
+- `name`
+  * `firstName`
+  * `lastName`
+- `email`
+- `password` (for this task, it will be clear text)
+
+Query:
+
+[source]
+----
+db.BlogUsers.insertMany([
+  {
+    username: "luna",
+    name: { firstName: "Luna", lastName: "Klatzer" },
+    email: "l.k@email.com",
+    password: "luna_klatzer123456789!?"
+  },
+  {
+    username: "mia",
+    name: { firstName: "Mia", lastName: "Marceta" },
+    email: "m.m@email.com",
+    password: "mia_marceta123456789!?"
+  },
+  {
+    username: "jane",
+    name: { firstName: "Jane", lastName: "Doe" },
+    email: "j.d@email.com",
+    password: "jane_doe123456789!?"
+  },
+  {
+    username: "john",
+    name: { firstName: "John", lastName: "Doe" },
+    email: "j2.d@email.com",
+    password: "john_doe123456789!?"
+  },
+  {
+    username: "jane2",
+    name: { firstName: "Jane", lastName: "Doe" },
+    email: "j3.d@email.com",
+    password: "jane_doe123456789!?"
+  },
+  {
+    username: "thisismypassword",
+    name: { firstName: "This", lastName: "IsMyPassword" },
+    email: "thisismypassword@email.com",
+    password: "thisismypassword"
+  },
+  {
+    username: "admin",
+    name: { firstName: "Admin", lastName: "Admin" },
+    email: "admin@email.com",
+    password: "admin123456789!?"
+  },
+  {
+    username: "guest",
+    name: { firstName: "Guest", lastName: "Guest" },
+    email: "guest@email.com",
+    password: "guest123456789!?"
+  }
+])
+----
+
+=== 4. Create 5 blog entries which are distributed among 3 categories
+
+We will create 5 blog entries with the following fields:
+
+- `title`
+- `author` (reference to a user)
+- `description`
+- `creationDate`
+- `editDates`
+- `impressionCount`
+- `content`
+- `commentsAllowed`
+- `category` (reference to a category)
+
+As well as 3 categories with the following fields:
+
+- `name`
+- `description`
+
+Query:
+
+[source]
+----
+db.BlogCategories.insertMany([
+  {
+    name: "Technology",
+    description: "The latest news in technology"
+  },
+  {
+    name: "Travel",
+    description: "Travel stories and tips"
+  },
+  {
+    name: "Food",
+    description: "Recipes and food reviews"
+  }
+])
+db.BlogEntries.insertMany([
+  {
+    title: "First Blog Entry",
+    author: db.BlogUsers.findOne({ username: "luna" })._id,
+    description: "This is the first blog entry.",
+    creationDate: new Date("2016-05-14T16:00:00Z"),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: "Content of the first blog entry.",
+      images: [
+        "image1.jpg",
+        "image2.jpg"
+      ],
+      videos: [],
+      location: {
+        latitude: 40.7128,
+        longitude: -74.0060
+      },
+      links: [
+        {
+          title: "Link 1",
+          url: "http://www.link1.com"
+        },
+        {
+          title: "Link 2",
+          url: "http://www.link2.com"
+        }
+      ]
+    },
+    commentsAllowed: true,
+    category: db.BlogCategories.findOne({ name: "Technology" })._id
+  },
+  {
+    title: "Second Blog Entry",
+    author: db.BlogUsers.findOne({ username: "mia" })._id,
+    description: "This is the second blog entry.",
+    creationDate: new Date("2016-05-15T16:00:00Z"),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: "Content of the second blog entry.",
+      images: [
+        "image3.jpg",
+        "image4.jpg"
+      ],
+      videos: [
+        "video1.mp4"
+      ],
+      location: {
+        latitude: 34.0522,
+        longitude: -118.2437
+      },
+      links: [
+        {
+          title: "Link 3",
+          url: "http://www.link3.com"
+        }
+      ]
+    },
+    commentsAllowed: true,
+    category: db.BlogCategories.findOne({ name: "Travel" })._id
+  },
+  {
+    title: "Third Blog Entry",
+    author: db.BlogUsers.findOne({ username: "jane" })._id,
+    description: "This is the third blog entry.",
+    creationDate: new Date("2016-05-16T16:00:00Z"),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: "Content of the third blog entry.",
+      images: [
+        "image5.jpg",
+        "image6.jpg"
+      ],
+      videos: [],
+      location: {
+        latitude: 51.5074,
+        longitude: -0.1278
+      },
+      links: []
+    },
+    commentsAllowed: false,
+    category: db.BlogCategories.findOne({ name: "Food" })._id
+  },
+  {
+    title: "Fourth Blog Entry",
+    author: db.BlogUsers.findOne({ username: "john" })._id,
+    description: "This is the fourth blog entry.",
+    creationDate: new Date("2016-05-17T16:00:00Z"),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: "Content of the fourth blog entry.",
+      images: [],
+      videos: [],
+      location: {
+        latitude: 48.8566,
+        longitude: 2.3522
+      },
+      links: [
+        {
+          title: "Link 4",
+          url: "http://www.link4.com"
+        }
+      ]
+    },
+    commentsAllowed: false,
+    category: db.BlogCategories.findOne({ name: "Technology" })._id
+  },
+  {
+    title: "Fifth Blog Entry",
+    author: db.BlogUsers.findOne({ username: "jane2" })._id,
+    description: "This is the fifth blog entry.",
+    creationDate: new Date("2016-05-18T16:00:00Z"),
+    editDates: [
+      new Date("2022-05-18T16:00:00Z"),
+      new Date()
+    ],
+    impressionCount: 0,
+    content: {
+      text: "Content of the fifth blog entry.",
+      images: [
+        "image7.jpg",
+        "image8.jpg"
+      ],
+      videos: [],
+      location: null,
+      links: [
+        {
+          title: "Link 5",
+          url: "http://www.link5.com"
+        }
+      ]
+    },
+    commentsAllowed: true,
+    category: db.BlogCategories.findOne({ name: "Travel" })._id
+  }
+])
+----
+
+=== 5. Create 4 comments for the blog entries (for blog entries that allow it)
+
+We will create 4 comments with the following fields:
+
+- `content`
+- `author` (reference to a user)
+- `entry` (reference to a blog entry)
+- `creationDate`
+
+Query:
+
+[source]
+----
+db.Comments.insertMany([
+  {
+    content: "This is a comment for the first blog entry.",
+    author: db.BlogUsers.findOne({ username: "mia" })._id,
+    entry: db.BlogEntries.findOne({ title: "First Blog Entry" })._id,
+    creationDate: new Date("2016-05-14T16:30:00Z")
+  },
+  {
+    content: "This is a comment for the first blog entry.",
+    author: db.BlogUsers.findOne({ username: "jane" })._id,
+    entry: db.BlogEntries.findOne({ title: "First Blog Entry" })._id,
+    creationDate: new Date("2016-05-14T17:30:00Z")
+  },
+  {
+    content: "This is a comment for the second blog entry.",
+    author: db.BlogUsers.findOne({ username: "jane" })._id,
+    entry: db.BlogEntries.findOne({ title: "Second Blog Entry" })._id,
+    creationDate: new Date("2016-05-15T16:30:00Z")
+  },
+  {
+    content: "This is a comment for the fifth blog entry.",
+    author: db.BlogUsers.findOne({ username: "john" })._id,
+    entry: db.BlogEntries.findOne({ title: "Fifth Blog Entry" })._id,
+    creationDate: new Date("2016-05-18T16:30:00Z")
+  },
+])
+----
+
+== Queries
+
+=== Find all users where username is the same as the password
+
+Query:
+
+[source]
+----
+db.BlogUsers.find({ $where: "this.username === this.password" })
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dc1cd1b7d6a3107b2dbf'),
+    username: 'thisismypassword',
+    name: { firstName: 'This', lastName: 'IsMyPassword' },
+    email: 'thisismypassword@email.com',
+    password: 'thisismypassword'
+  }
+]
+----
+
+=== Find all blog entries that were created by a user with a certain username
+
+We will search for `Jane`.
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({ author: db.BlogUsers.findOne({ username: "jane" })._id })
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbc'),
+    title: 'Third Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dab'),
+    description: 'This is the third blog entry.',
+    creationDate: ISODate('2016-05-16T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the third blog entry.',
+      images: [ 'image5.jpg', 'image6.jpg' ],
+      videos: [],
+      location: { latitude: 51.5074, longitude: -0.1278 },
+      links: []
+    },
+    commentsAllowed: false,
+    category: ObjectId('6618d840d1b7d6a3107b2db0')
+  }
+]
+----
+
+=== Find all blog entries with no coordinates
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({ "content.location": null })
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbe'),
+    title: 'Fifth Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dad'),
+    description: 'This is the fifth blog entry.',
+    creationDate: ISODate('2016-05-18T16:00:00.000Z'),
+    editDates: [
+      ISODate('2022-05-18T16:00:00.000Z'),
+      ISODate('2024-04-12T06:59:09.481Z')
+    ],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the fifth blog entry.',
+      images: [ 'image7.jpg', 'image8.jpg' ],
+      videos: [],
+      location: null,
+      links: [ { title: 'Link 5', url: 'http://www.link5.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog entries with more than one image
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({ $where: "this.content.images.length > 1" })
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+    title: 'First Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2da9'),
+    description: 'This is the first blog entry.',
+    creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the first blog entry.',
+      images: [ 'image1.jpg', 'image2.jpg' ],
+      videos: [],
+      location: { latitude: 40.7128, longitude: -74.006 },
+      links: [
+        { title: 'Link 1', url: 'http://www.link1.com' },
+        { title: 'Link 2', url: 'http://www.link2.com' }
+      ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2dae')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbb'),
+    title: 'Second Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2daa'),
+    description: 'This is the second blog entry.',
+    creationDate: ISODate('2016-05-15T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the second blog entry.',
+      images: [ 'image3.jpg', 'image4.jpg' ],
+      videos: [ 'video1.mp4' ],
+      location: { latitude: 34.0522, longitude: -118.2437 },
+      links: [ { title: 'Link 3', url: 'http://www.link3.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbc'),
+    title: 'Third Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dab'),
+    description: 'This is the third blog entry.',
+    creationDate: ISODate('2016-05-16T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the third blog entry.',
+      images: [ 'image5.jpg', 'image6.jpg' ],
+      videos: [],
+      location: { latitude: 51.5074, longitude: -0.1278 },
+      links: []
+    },
+    commentsAllowed: false,
+    category: ObjectId('6618d840d1b7d6a3107b2db0')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbe'),
+    title: 'Fifth Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dad'),
+    description: 'This is the fifth blog entry.',
+    creationDate: ISODate('2016-05-18T16:00:00.000Z'),
+    editDates: [
+      ISODate('2022-05-18T16:00:00.000Z'),
+      ISODate('2024-04-12T06:59:09.481Z')
+    ],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the fifth blog entry.',
+      images: [ 'image7.jpg', 'image8.jpg' ],
+      videos: [],
+      location: null,
+      links: [ { title: 'Link 5', url: 'http://www.link5.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog entries with images and coordinates
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({
+  "content.images": { $exists: true, $ne: [] },
+  "content.location": { $exists: true }
+})
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+    title: 'First Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2da9'),
+    description: 'This is the first blog entry.',
+    creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the first blog entry.',
+      images: [ 'image1.jpg', 'image2.jpg' ],
+      videos: [],
+      location: { latitude: 40.7128, longitude: -74.006 },
+      links: [
+        { title: 'Link 1', url: 'http://www.link1.com' },
+        { title: 'Link 2', url: 'http://www.link2.com' }
+      ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2dae')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbb'),
+    title: 'Second Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2daa'),
+    description: 'This is the second blog entry.',
+    creationDate: ISODate('2016-05-15T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the second blog entry.',
+      images: [ 'image3.jpg', 'image4.jpg' ],
+      videos: [ 'video1.mp4' ],
+      location: { latitude: 34.0522, longitude: -118.2437 },
+      links: [ { title: 'Link 3', url: 'http://www.link3.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbc'),
+    title: 'Third Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dab'),
+    description: 'This is the third blog entry.',
+    creationDate: ISODate('2016-05-16T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the third blog entry.',
+      images: [ 'image5.jpg', 'image6.jpg' ],
+      videos: [],
+      location: { latitude: 51.5074, longitude: -0.1278 },
+      links: []
+    },
+    commentsAllowed: false,
+    category: ObjectId('6618d840d1b7d6a3107b2db0')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbe'),
+    title: 'Fifth Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dad'),
+    description: 'This is the fifth blog entry.',
+    creationDate: ISODate('2016-05-18T16:00:00.000Z'),
+    editDates: [
+      ISODate('2022-05-18T16:00:00.000Z'),
+      ISODate('2024-04-12T06:59:09.481Z')
+    ],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the fifth blog entry.',
+      images: [ 'image7.jpg', 'image8.jpg' ],
+      videos: [],
+      location: null,
+      links: [ { title: 'Link 5', url: 'http://www.link5.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog entries of a specific author (search by last name) or "admin", but not "guest"
+
+We will search for `Marceta` (case-insensitive).
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({
+  author: {
+    $in: [
+      db.BlogUsers.findOne({ "name.lastName": /marceta/i })._id,
+      db.BlogUsers.findOne({ username: "admin" })._id
+    ],
+    $nin: [ db.BlogUsers.findOne({ username: "guest" })._id ]
+  }
+})
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbb'),
+    title: 'Second Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2daa'),
+    description: 'This is the second blog entry.',
+    creationDate: ISODate('2016-05-15T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the second blog entry.',
+      images: [ 'image3.jpg', 'image4.jpg' ],
+      videos: [ 'video1.mp4' ],
+      location: { latitude: 34.0522, longitude: -118.2437 },
+      links: [ { title: 'Link 3', url: 'http://www.link3.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog entries that reference their title in the content (case-insensitive)
+
+Query:
+
+[source]
+----
+db.BlogEntries.find({
+  $where: "this.content.text.toLowerCase().includes(this.title.toLowerCase())"
+})
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+    title: 'First Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2da9'),
+    description: 'This is the first blog entry.',
+    creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the first blog entry.',
+      images: [ 'image1.jpg', 'image2.jpg' ],
+      videos: [],
+      location: { latitude: 40.7128, longitude: -74.006 },
+      links: [
+        { title: 'Link 1', url: 'http://www.link1.com' },
+        { title: 'Link 2', url: 'http://www.link2.com' }
+      ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2dae')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbb'),
+    title: 'Second Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2daa'),
+    description: 'This is the second blog entry.',
+    creationDate: ISODate('2016-05-15T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the second blog entry.',
+      images: [ 'image3.jpg', 'image4.jpg' ],
+      videos: [ 'video1.mp4' ],
+      location: { latitude: 34.0522, longitude: -118.2437 },
+      links: [ { title: 'Link 3', url: 'http://www.link3.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbc'),
+    title: 'Third Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dab'),
+    description: 'This is the third blog entry.',
+    creationDate: ISODate('2016-05-16T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the third blog entry.',
+      images: [ 'image5.jpg', 'image6.jpg' ],
+      videos: [],
+      location: { latitude: 51.5074, longitude: -0.1278 },
+      links: []
+    },
+    commentsAllowed: false,
+    category: ObjectId('6618d840d1b7d6a3107b2db0')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbd'),
+    title: 'Fourth Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dac'),
+    description: 'This is the fourth blog entry.',
+    creationDate: ISODate('2016-05-17T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the fourth blog entry.',
+      images: [],
+      videos: [],
+      location: { latitude: 48.8566, longitude: 2.3522 },
+      links: [ { title: 'Link 4', url: 'http://www.link4.com' } ]
+    },
+    commentsAllowed: false,
+    category: ObjectId('6618d840d1b7d6a3107b2dae')
+  },
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbe'),
+    title: 'Fifth Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2dad'),
+    description: 'This is the fifth blog entry.',
+    creationDate: ISODate('2016-05-18T16:00:00.000Z'),
+    editDates: [
+      ISODate('2022-05-18T16:00:00.000Z'),
+      ISODate('2024-04-12T06:59:09.481Z')
+    ],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the fifth blog entry.',
+      images: [ 'image7.jpg', 'image8.jpg' ],
+      videos: [],
+      location: null,
+      links: [ { title: 'Link 5', url: 'http://www.link5.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog users sorted by username with their latest 2 blog entries (based on creation datae), second oldest blog entry, all blog entries of the last week and the latest two blog comments of a certain person
+
+We will search for `Jane` in the comments.
+
+Query:
+
+[source]
+----
+
+----
