@@ -1143,3 +1143,106 @@ Result:
   }
 ]
 ----
+
+=== Add another author to the latest BlogEntry, or change this if adding is not possible
+
+Query:
+
+[source]
+----
+
+db.BlogEntries.updateOne(
+    { _id: db.BlogEntries.find().sort({ creationDate: -1 }).limit(1)[0]._id},
+    { $set: { author: db.BlogUsers.findOne({ username: "guest" })} }
+);
+
+----
+
+=== Expand the latest BlogEntry with a "field" hashtags (with content)
+Query:
+
+[source]
+----
+
+db.BlogEntries.updateOne(
+    { _id: db.BlogEntries.find().sort({ creationDate: -1 }).limit(1)[0]._id_},
+    { $set: { hashtags: ["sport", "fun", "tags"] } }
+);
+
+----
+
+=== Change BlogCategory name
+Query:
+
+[source]
+----
+db.BlogCategories.updateOne(
+    { name: "Technology" },
+    { $set: { name: "Science" } }
+);
+----
+
+=== Add new Entry or upsert existing one
+Query:
+
+[source]
+----
+var newBlogEntry = {
+    title: "Sixth Blog Entry",
+    author: db.BlogUsers.findOne({ username: "admin" })._id,
+    description: "This is the sixth blog entry.",
+    creationDate: new Date("2016-05-19T16:00:00Z"),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+        text: "Content of the sixth blog entry.",
+        images: [
+            "image9.jpg",
+            "image10.jpg"
+        ],
+        videos: [],
+        location: null,
+        links: [
+            {
+                title: "Link 6",
+                url: "http://www.link6.com"
+            }
+        ]
+    },
+    commentsAllowed: true,
+    category: db.BlogCategories.findOne({ name: "Technology" })._id
+};
+
+db.BlogEntries.updateOne(
+    { title: newBlogEntry.title },
+    { $set: newBlogEntry },
+    { upsert: true }
+);
+
+newBlogEntry.description = "Updated description for the new blog entry.";
+db.BlogEntries.updateOne(
+    { _id: newBlogEntry._id },
+    { $set: newBlogEntry },
+    { upsert: true }
+);
+
+----
+
+=== Delete a BlogEntry and its comments
+Query:
+
+[source]
+----
+db.BlogEntries.deleteOne({ _id: newBlogEntry._id});
+
+db.Comments.deleteMany({ entry: newBlogEntry });
+----
+
+=== Create Indexes
+
+[source]
+----
+db.BlogUsers.createIndex({ "username": 1 }, { unique: true });
+
+db.BlogEntries.createIndex({ "title": 1 }, { unique: true });
+----
