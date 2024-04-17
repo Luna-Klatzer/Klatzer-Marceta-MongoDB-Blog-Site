@@ -817,7 +817,6 @@ Query:
 
 [source]
 ----
-
 db.BlogCategories.updateOne(
     { name: "Technology" },
     { $set: { name: "Science" } }
@@ -878,4 +877,13 @@ Query:
 db.BlogEntries.deleteOne({ _id: newBlogEntry._id});
 
 db.Comments.deleteMany({ entry: newBlogEntry });
+----
+
+=== Create Indexes
+
+[source]
+----
+db.BlogUsers.createIndex({ "username": 1 }, { unique: true });
+
+db.BlogEntries.createIndex({ "title": 1 }, { unique: true });
 ----
