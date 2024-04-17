@@ -1144,6 +1144,8 @@ Result:
 ]
 ----
 
+== Updates
+
 === Add another author to the latest BlogEntry, or change this if adding is not possible
 
 Query:
@@ -1237,6 +1239,8 @@ db.BlogEntries.deleteOne({ _id: newBlogEntry._id});
 
 db.Comments.deleteMany({ entry: newBlogEntry });
 ----
+
+== Indexes
 
 === Create Indexes
 
