@@ -774,13 +774,372 @@ Result:
 ]
 ----
 
-=== Find all blog users sorted by username with their latest 2 blog entries (based on creation datae), second oldest blog entry, all blog entries of the last week and the latest two blog comments of a certain person
-
-We will search for `Jane` in the comments.
+=== Find all blog users sorted by username
 
 Query:
 
 [source]
 ----
+db.BlogUsers.find().sort({ username: 1 })
+----
 
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618ddc8d1b7d6a3107b2dc0'),
+    username: 'admin',
+    name: { firstName: 'Admin', lastName: 'Admin' },
+    email: 'admin@email.com',
+    password: 'admin123456789!?'
+  },
+  {
+    _id: ObjectId('6618ddc8d1b7d6a3107b2dc1'),
+    username: 'guest',
+    name: { firstName: 'Guest', lastName: 'Guest' },
+    email: 'guest@email.com',
+    password: 'guest123456789!?'
+  },
+  {
+    _id: ObjectId('6618d834d1b7d6a3107b2dab'),
+    username: 'jane',
+    name: { firstName: 'Jane', lastName: 'Doe' },
+    email: 'j.d@email.com',
+    password: 'jane_doe123456789!?'
+  },
+  {
+    _id: ObjectId('6618d834d1b7d6a3107b2dad'),
+    username: 'jane2',
+    name: { firstName: 'Jane', lastName: 'Doe' },
+    email: 'j3.d@email.com',
+    password: 'jane_doe123456789!?'
+  },
+  {
+    _id: ObjectId('6618d834d1b7d6a3107b2dac'),
+    username: 'john',
+    name: { firstName: 'John', lastName: 'Doe' },
+    email: 'j2.d@email.com',
+    password: 'john_doe123456789!?'
+  },
+  {
+    _id: ObjectId('6618d834d1b7d6a3107b2da9'),
+    username: 'luna',
+    name: { firstName: 'Luna', lastName: 'Klatzer' },
+    email: 'l.k@email.com',
+    password: 'luna_klatzer123456789!?'
+  },
+  {
+    _id: ObjectId('6618d834d1b7d6a3107b2daa'),
+    username: 'mia',
+    name: { firstName: 'Mia', lastName: 'Marceta' },
+    email: 'm.m@email.com',
+    password: 'mia_marceta123456789!?'
+  },
+  {
+    _id: ObjectId('6618dc1cd1b7d6a3107b2dbf'),
+    username: 'thisismypassword',
+    name: { firstName: 'This', lastName: 'IsMyPassword' },
+    email: 'thisismypassword@email.com',
+    password: 'thisismypassword'
+  }
+]
+----
+
+=== Find the two latest blog entries for every user
+
+Query:
+
+[source]
+----
+db.BlogEntries.aggregate([
+  { $sort: { creationDate: -1 } },
+  {
+    $group: {
+      _id: "$author",
+      entries: { $push: "$$ROOT" }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      entries: { $slice: ["$entries", 2] }
+    }
+  }
+])
+----
+
+=== Find the second oldest blog entry
+
+Query:
+
+[source]
+----
+db.BlogEntries.find().sort({ creationDate: 1 }).skip(1).limit(1)
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('6618dbbdd1b7d6a3107b2dbb'),
+    title: 'Second Blog Entry',
+    author: ObjectId('6618d834d1b7d6a3107b2daa'),
+    description: 'This is the second blog entry.',
+    creationDate: ISODate('2016-05-15T16:00:00.000Z'),
+    editDates: [],
+    impressionCount: 0,
+    content: {
+      text: 'Content of the second blog entry.',
+      images: [ 'image3.jpg', 'image4.jpg' ],
+      videos: [ 'video1.mp4' ],
+      location: { latitude: 34.0522, longitude: -118.2437 },
+      links: [ { title: 'Link 3', url: 'http://www.link3.com' } ]
+    },
+    commentsAllowed: true,
+    category: ObjectId('6618d840d1b7d6a3107b2daf')
+  }
+]
+----
+
+=== Find all blog entries of the last week that have at least one comment
+
+_Since all the dates of the blog entries are so long ago, to test this we will use the week of 2016-05-09 ~ 15. (one week
+later than the creation dates of the first blog entries)._
+
+Query (For the example, we will use the start of the week 2016-05-09 and the start of the next week at midnight):
+
+[source]
+----
+db.Comments.aggregate([
+  {
+    $lookup: {
+      from: "BlogEntries",
+      localField: "entry",
+      foreignField: "_id",
+      as: "entry"
+    }
+  },
+  { $unwind: "$entry" },
+  {
+    $match: {
+      creationDate: {
+        $gte: new Date("2016-05-09T00:00:00Z"),
+        $lt: new Date("2016-05-16T00:00:00Z")
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$entry",
+      comments: { $push: "$$ROOT" }
+    }
+  },
+  {
+    $match: {
+      "comments.1": { $exists: true }
+    }
+  }
+])
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: {
+      _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+      title: 'First Blog Entry',
+      author: ObjectId('6618d834d1b7d6a3107b2da9'),
+      description: 'This is the first blog entry.',
+      creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+      editDates: [],
+      impressionCount: 0,
+      content: {
+        text: 'Content of the first blog entry.',
+        images: [ 'image1.jpg', 'image2.jpg' ],
+        videos: [],
+        location: { latitude: 40.7128, longitude: -74.006 },
+        links: [
+          { title: 'Link 1', url: 'http://www.link1.com' },
+          { title: 'Link 2', url: 'http://www.link2.com' }
+        ]
+      },
+      commentsAllowed: true,
+      category: ObjectId('6618d840d1b7d6a3107b2dae')
+    },
+    comments: [
+      {
+        _id: ObjectId('661f8ab97bd02d34407b2da9'),
+        content: 'This is a comment for the first blog entry.',
+        author: ObjectId('6618d834d1b7d6a3107b2daa'),
+        entry: {
+          _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+          title: 'First Blog Entry',
+          author: ObjectId('6618d834d1b7d6a3107b2da9'),
+          description: 'This is the first blog entry.',
+          creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+          editDates: [],
+          impressionCount: 0,
+          content: {
+            text: 'Content of the first blog entry.',
+            images: [ 'image1.jpg', 'image2.jpg' ],
+            videos: [],
+            location: { latitude: 40.7128, longitude: -74.006 },
+            links: [
+              { title: 'Link 1', url: 'http://www.link1.com' },
+              { title: 'Link 2', url: 'http://www.link2.com' }
+            ]
+          },
+          commentsAllowed: true,
+          category: ObjectId('6618d840d1b7d6a3107b2dae')
+        },
+        creationDate: ISODate('2016-05-14T16:30:00.000Z')
+      },
+      {
+        _id: ObjectId('661f8ab97bd02d34407b2daa'),
+        content: 'This is a comment for the first blog entry.',
+        author: ObjectId('6618d834d1b7d6a3107b2dab'),
+        entry: {
+          _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+          title: 'First Blog Entry',
+          author: ObjectId('6618d834d1b7d6a3107b2da9'),
+          description: 'This is the first blog entry.',
+          creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+          editDates: [],
+          impressionCount: 0,
+          content: {
+            text: 'Content of the first blog entry.',
+            images: [ 'image1.jpg', 'image2.jpg' ],
+            videos: [],
+            location: { latitude: 40.7128, longitude: -74.006 },
+            links: [
+              { title: 'Link 1', url: 'http://www.link1.com' },
+              { title: 'Link 2', url: 'http://www.link2.com' }
+            ]
+          },
+          commentsAllowed: true,
+          category: ObjectId('6618d840d1b7d6a3107b2dae')
+        },
+        creationDate: ISODate('2016-05-14T17:30:00.000Z')
+      }
+    ]
+  }
+]
+----
+
+=== Find the latest two blog comments which were posted as comments to certain person's blog entries
+
+We will search for `Luna Klatzer` as the author of the blog entries.
+
+Query:
+
+[source]
+----
+db.Comments.aggregate([
+  {
+    $lookup: {
+      from: "BlogEntries",
+      localField: "entry",
+      foreignField: "_id",
+      as: "entry"
+    }
+  },
+  { $unwind: "$entry" },
+  {
+    $lookup: {
+      from: "BlogUsers",
+      localField: "author",
+      foreignField: "_id",
+      as: "author"
+    }
+  },
+  { $unwind: "$author" },
+  {
+    $match: {
+      "entry.author": db.BlogUsers.findOne({ "name.lastName": "Klatzer" })._id
+    },
+  },
+  { $sort: { creationDate: -1 } },
+  { $limit: 2 }
+])
+----
+
+Result:
+
+[source]
+----
+[
+  {
+    _id: ObjectId('661f8ab97bd02d34407b2daa'),
+    content: 'This is a comment for the first blog entry.',
+    author: {
+      _id: ObjectId('6618d834d1b7d6a3107b2dab'),
+      username: 'jane',
+      name: { firstName: 'Jane', lastName: 'Doe' },
+      email: 'j.d@email.com',
+      password: 'jane_doe123456789!?'
+    },
+    entry: {
+      _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+      title: 'First Blog Entry',
+      author: ObjectId('6618d834d1b7d6a3107b2da9'),
+      description: 'This is the first blog entry.',
+      creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+      editDates: [],
+      impressionCount: 0,
+      content: {
+        text: 'Content of the first blog entry.',
+        images: [ 'image1.jpg', 'image2.jpg' ],
+        videos: [],
+        location: { latitude: 40.7128, longitude: -74.006 },
+        links: [
+          { title: 'Link 1', url: 'http://www.link1.com' },
+          { title: 'Link 2', url: 'http://www.link2.com' }
+        ]
+      },
+      commentsAllowed: true,
+      category: ObjectId('6618d840d1b7d6a3107b2dae')
+    },
+    creationDate: ISODate('2016-05-14T17:30:00.000Z')
+  },
+  {
+    _id: ObjectId('661f8ab97bd02d34407b2da9'),
+    content: 'This is a comment for the first blog entry.',
+    author: {
+      _id: ObjectId('6618d834d1b7d6a3107b2daa'),
+      username: 'mia',
+      name: { firstName: 'Mia', lastName: 'Marceta' },
+      email: 'm.m@email.com',
+      password: 'mia_marceta123456789!?'
+    },
+    entry: {
+      _id: ObjectId('6618dbbdd1b7d6a3107b2dba'),
+      title: 'First Blog Entry',
+      author: ObjectId('6618d834d1b7d6a3107b2da9'),
+      description: 'This is the first blog entry.',
+      creationDate: ISODate('2016-05-14T16:00:00.000Z'),
+      editDates: [],
+      impressionCount: 0,
+      content: {
+        text: 'Content of the first blog entry.',
+        images: [ 'image1.jpg', 'image2.jpg' ],
+        videos: [],
+        location: { latitude: 40.7128, longitude: -74.006 },
+        links: [
+          { title: 'Link 1', url: 'http://www.link1.com' },
+          { title: 'Link 2', url: 'http://www.link2.com' }
+        ]
+      },
+      commentsAllowed: true,
+      category: ObjectId('6618d840d1b7d6a3107b2dae')
+    },
+    creationDate: ISODate('2016-05-14T16:30:00.000Z')
+  }
+]
 ----
